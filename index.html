@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rally Ticket</title>
+<style>
+  :root {
+    --accent: #2a7;
+    --muted: #888;
+    --border: #8886;
+    --text-brown: #4a3b32;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font: 16px/1.5 system-ui, -apple-system, sans-serif;
+    background: #111;
+  }
+
+  .page {
+    position: relative;
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  .page + .page { margin-top: 24px; }
+
+  .page img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .page-layer {
+    position: absolute;
+    inset: 0;
+  }
+
+  /* Invisible hit area for each stamp. */
+  .stamp {
+    position: absolute;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+  }
+  .stamp.collected { cursor: pointer; }
+
+  /* The X — fills the entire hit area (the circle) */
+  .x-mark {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    animation: x-fade .25s ease-out;
+  }
+  .x-mark::before,
+  .x-mark::after {
+    content: "";
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 90%;
+    height: 14%;
+    min-height: 8px;
+    background: var(--x-color, #d46a8c);
+    border-radius: 999px;
+    box-shadow: 0 2px 8px #0006;
+  }
+  .x-mark::before { transform: translate(-50%, -50%) rotate(45deg); }
+  .x-mark::after  { transform: translate(-50%, -50%) rotate(-45deg); }
+
+  @keyframes x-fade {
+    0%   { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  /* Progress ring while holding */
+  .hold-ring {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .hold-ring.active { opacity: 1; }
+  .hold-ring svg { width: 100%; height: 100%; display: block; }
+  .hold-ring circle.track {
+    fill: none; stroke: #0003; stroke-width: 6;
+  }
+  .hold-ring circle.bar {
+    fill: none; stroke: var(--accent); stroke-width: 6;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+  }
+
+  /* Shared button styling */
+  .ui-btn {
+    background: #4a3b32;
+    color: white;
+    border: none;
+    padding: 8px 12px; 
+    font-size: 14px;   
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    font-family: Arial, sans-serif;
+    position: absolute;
+    z-index: 50;
+    white-space: nowrap; 
+  }
+
+  /* New Ticket Button (Top Right, Page 1) */
+  .new-ticket-btn {
+    top: 10px;
+    right: 10px;
+  }
+
+  /* Ticket Code Specific (Bottom Right, Page 2) */
+  .ticket-code-btn {
+    bottom: 10px;
+    right: 10px;
+    cursor: text; 
+    padding: 2px 10px; 
+    font-size: 13px;
+    border-radius: 3px; 
+    letter-spacing: 1px;
+  }
+
+  /* New Ticket Button Container (for popup) */
+  .new-ticket-container {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 50;
+  }
+  .new-ticket-confirm {
+    position: absolute;
+    top: 32px; 
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: none;
+    width: 200px;
+    text-align: center;
+  }
+  .new-ticket-confirm.show { display: block; }
+  .new-ticket-confirm p {
+    margin: 0 0 10px 0;
+    font-size: 13px;
+    color: #333;
+  }
+  .confirm-buttons {
+    display: flex;
+    gap: 8px;
+  }
+  .confirm-buttons button {
+    flex: 1;
+    padding: 6px;
+    font-size: 12px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .confirm-yes { background: #c33; color: white; }
+  .confirm-no { background: #eee; color: #333; }
+
+  /* Footer */
+  .page-foot {
+    position: absolute;
+    left: 20px; right: 20px; bottom: 12px;
+    display: flex; justify-content: space-between;
+    font-size: 16px; color: #fff;
+    text-shadow: 0 1px 3px #0008;
+  }
+
+  .modal-backdrop {
+    position: fixed; inset: 0; background: #0008;
+    display: none; align-items: center; justify-content: center;
+    z-index: 100; padding: 20px;
+  }
+  .modal-backdrop.show { display: flex; }
+  .modal {
+    background: Canvas; color: CanvasText;
+    border-radius: 16px; padding: 28px; width: 100%; max-width: 400px;
+    box-shadow: 0 8px 40px #0006;
+  }
+  .modal h2 { margin: 0 0 8px; font-size: 20px; }
+  .modal p { margin: 0 0 16px; font-size: 15px; color: var(--muted); }
+  .modal input {
+    width: 100%; font: inherit; font-size: 20px; padding: 14px;
+    border: 2px solid var(--border); border-radius: 12px;
+    margin-bottom: 12px; text-align: center;
+    letter-spacing: 3px;
+    background: transparent; color: inherit;
+  }
+  .modal input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .modal-actions { display: flex; gap: 10px; }
+  .modal-actions button {
+    flex: 1; font: inherit; font-size: 16px; padding: 14px;
+    border-radius: 12px; border: 2px solid var(--border);
+    background: transparent; color: inherit; cursor: pointer;
+  }
+  .modal-actions button.primary {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+  }
+  .error { color: #c33; font-size: 15px; min-height: 22px; margin-bottom: 8px; }
+  .shake { animation: shake .3s; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+  }
+
+  @media print {
+    @page { margin: 0; }
+    html, body { background: white; }
+    .page { page-break-after: always; break-after: page; margin: 0; }
+    .page:last-child { page-break-after: auto; break-after: auto; }
+    .modal-backdrop, .page-foot, .hold-ring, .new-ticket-container, .ticket-code-btn { display: none !important; }
+    .page img { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1 -->
+<div class="page" id="page1">
+  <img src="IAWT1.png" alt="Ticket front">
+  
+  <!-- New Ticket Button (3-Step) -->
+  <div class="new-ticket-container">
+    <button class="ui-btn new-ticket-btn" id="newTicketBtn">New Ticket</button>
+    
+    <div class="new-ticket-confirm" id="newTicketConfirm">
+      <p id="confirmText">Are you sure you want a new ticket?</p>
+      <div class="confirm-buttons" id="confirmBtns">
+        <button class="confirm-yes" id="confirmYes">Yes</button>
+        <button class="confirm-no" id="confirmNo">No</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 2 -->
+<div class="page" id="page2">
+  <img src="IAWT2.png" alt="Ticket back">
+  
+  <!-- Ticket Code (Bottom Right) -->
+  <div class="ui-btn ticket-code-btn" id="ticketCodeBox"></div>
+
+  <!-- Overlay for Stamps -->
+  <div class="page-layer" id="overlay"></div>
+  
+  <footer class="page-foot">
+    <span>Hold a circle for 2 seconds, then enter the staff code.</span>
+  </footer>
+</div>
+
+<div class="modal-backdrop" id="modal">
+  <div class="modal" id="modalBox">
+    <h2 id="modalTitle">Enter code</h2>
+    <p id="modalSub">Ask booth staff for the code.</p>
+    <div class="error" id="modalError"></div>
+    <input id="codeInput" inputmode="numeric" autocomplete="off"
+           spellcheck="false" maxlength="16">
+    <div class="modal-actions">
+      <button id="cancelBtn">Cancel</button>
+      <button id="submitBtn" class="primary">Submit</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG
+   ============================================================ */
+const CONFIG = {
+  HOLD_MS: 2000,
+  STAMP_CODE: "1234",  
+  REMOVE_CODE: "4321",
+
+  areas: [
+    { id: "ekk",      left:  4.5, top:  4.5, width: 13.5, height: 19.0, centered: true }, 
+    { id: "b6",       left: 20.0, top:  4.5, width: 14.0, height: 19.5, centered: true }, 
+    { id: "b5",       left: 40.0, top: 10.5, width: 14.0, height: 19.5, centered: true }, 
+    { id: "khazanah", left:  4.5, top: 22.0, width: 13.5, height: 19.0, centered: true }, 
+    { id: "b3",       left: 19.5, top: 33.5, width: 14.0, height: 19.5, centered: true }, 
+    { id: "b4",       left: 54.5, top: 32.5, width: 14.0, height: 19.5, centered: true }, 
+    { id: "b2",       left:  6.0, top: 62.5, width: 14.0, height: 19.5, centered: true }, 
+    { id: "b1",       left: 38.0, top: 68.0, width: 14.0, height: 19.5, centered: true }, 
+  ],
+};
+
+const PALETTE = [
+  "#d46a8c", "#e07a5f", "#81b29a", "#f2cc8f", "#3d405b", 
+  "#c8553d", "#9a8c98", "#4a7c59", "#d1495b", "#4f6d7a", "#edae49"
+];
+
+function getRandomColor() {
+  return PALETTE[Math.floor(Math.random() * PALETTE.length)];
+}
+
+/* ============================================================
+   TICKET CODE LOGIC ([DDMM]HH.mm.ss-SS)
+   ============================================================ */
+const urlParams = new URLSearchParams(location.search);
+let ticketCode = urlParams.get("ticket");
+
+if (!ticketCode) {
+  const now = new Date();
+  
+  const dd = String(now.getDate()).padStart(2, '0');
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const hh = String(now.getHours()).padStart(2, '0');
+  const min = String(now.getMinutes()).padStart(2, '0');
+  const ss = String(now.getSeconds()).padStart(2, '0');
+  const ms = String(now.getMilliseconds()).padStart(2, '0').slice(0, 2); 
+
+  // Format: [2610]14.45.12-89
+  ticketCode = `[${dd}${mm}]${hh}.${min}.${ss}-${ms}`;
+}
+
+document.getElementById("ticketCodeBox").textContent = ticketCode;
+
+/* ============================================================
+   3-STEP NEW TICKET CONFIRMATION
+   ============================================================ */
+const newTicketBtn = document.getElementById("newTicketBtn");
+const newTicketConfirm = document.getElementById("newTicketConfirm");
+const confirmText = document.getElementById("confirmText");
+const confirmYes = document.getElementById("confirmYes");
+const confirmNo = document.getElementById("confirmNo");
+
+let confirmStep = 0;
+
+function resetConfirm() {
+  confirmStep = 0;
+  newTicketConfirm.classList.remove("show");
+  confirmText.textContent = "Are you sure you want a new ticket?";
+  confirmYes.textContent = "Yes";
+  confirmNo.textContent = "No";
+}
+
+newTicketBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (confirmStep === 0) {
+    resetConfirm();
+    newTicketConfirm.classList.add("show");
+  } else {
+    resetConfirm();
+  }
+});
+
+confirmYes.addEventListener("click", () => {
+  if (confirmStep === 0) {
+    confirmStep = 1;
+    confirmText.textContent = "This will permanently delete all stamps and generate a new code. Continue?";
+  } else if (confirmStep === 1) {
+    confirmStep = 2;
+    confirmText.textContent = "Final warning! Are you absolutely sure?";
+    confirmYes.textContent = "Wipe";
+  } else if (confirmStep === 2) {
+    localStorage.removeItem(`rally_stamps_default`);
+    if (urlParams.has("ticket")) {
+      location.reload();
+    } else {
+      location.href = location.pathname; 
+    }
+  }
+});
+
+confirmNo.addEventListener("click", resetConfirm);
+
+document.addEventListener("click", (e) => {
+  if (!newTicketConfirm.contains(e.target) && e.target !== newTicketBtn) {
+    resetConfirm();
+  }
+});
+
+/* ============================================================ */
+
+const PID  = urlParams.get("pid") || "default";
+const STORAGE_KEY = `rally_stamps_${PID}`;
+
+function loadStamps() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
+  catch { return {}; }
+}
+function saveStamps(s) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
+  catch (e) { console.warn("Could not save:", e); }
+}
+
+let stamps = loadStamps();
+let pendingArea = null;
+
+const overlay = document.getElementById("overlay");
+
+function buildRing() {
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", "0 0 100 100");
+  svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+  const track = document.createElementNS(ns, "circle");
+  track.setAttribute("class", "track");
+  track.setAttribute("cx", "50");
+  track.setAttribute("cy", "50");
+  track.setAttribute("r", "44");
+
+  const bar = document.createElementNS(ns, "circle");
+  bar.setAttribute("class", "bar");
+  bar.setAttribute("cx", "50");
+  bar.setAttribute("cy", "50");
+  bar.setAttribute("r", "44");
+  bar.setAttribute("stroke-dasharray", "276.46");
+  bar.setAttribute("stroke-dashoffset", "276.46");
+
+  svg.append(track, bar);
+  return { svg, bar, circumference: 276.46 };
+}
+
+const holdState = new WeakMap();
+
+function makeStampEl(area) {
+  const el = document.createElement("div");
+  el.className = "stamp";
+  el.dataset.areaId = area.id;
+  el.style.left   = `${area.left}%`;
+  el.style.top    = `${area.top}%`;
+  el.style.width  = `${area.width}%`;
+  el.style.height = `${area.height}%`;
+
+  const saved = stamps[area.id];
+  if (saved) {
+    el.classList.add("collected");
+    const x = document.createElement("div");
+    x.className = "x-mark";
+    x.style.setProperty('--x-color', saved.c || getRandomColor());
+    el.append(x);
+  }
+  
+  attachHoldHandlers(el, area);
+  return el;
+}
+
+function attachHoldHandlers(el, area) {
+  const state = { triggered: false, timer: null, ring: null };
+  holdState.set(el, state);
+
+  function placeRing() {
+    removeRing();
+    const wrap = document.createElement("div");
+    wrap.className = "hold-ring";
+    const { svg, bar, circumference } = buildRing();
+    wrap.append(svg);
+    el.append(wrap);
+    state.ring = { wrap, bar, circumference };
+    requestAnimationFrame(() => wrap.classList.add("active"));
+  }
+
+  function removeRing() {
+    if (state.ring?.wrap) state.ring.wrap.remove();
+    state.ring = null;
+  }
+
+  function start(e) {
+    if (e.button !== undefined && e.button !== 0) return;
+    if (state.triggered) return;
+    e.preventDefault();
+
+    placeRing();
+
+    const { bar, circumference } = state.ring;
+    bar.style.transition = "none";
+    bar.setAttribute("stroke-dashoffset", String(circumference));
+    void bar.getBoundingClientRect();
+    bar.style.transition = `stroke-dashoffset ${CONFIG.HOLD_MS}ms linear`;
+    bar.setAttribute("stroke-dashoffset", "0");
+
+    clearTimeout(state.timer);
+    state.timer = setTimeout(() => {
+      state.triggered = true;
+      removeRing();
+      if (navigator.vibrate) navigator.vibrate(40);
+      
+      const isCollected = !!stamps[area.id];
+      openModal(area, isCollected);
+      
+    }, CONFIG.HOLD_MS);
+  }
+
+  function cancel() {
+    if (state.triggered) return;
+    clearTimeout(state.timer);
+    if (state.ring) {
+      state.ring.bar.style.transition = "stroke-dashoffset 200ms ease";
+      state.ring.bar.setAttribute("stroke-dashoffset", String(state.ring.circumference));
+      const wrap = state.ring.wrap;
+      setTimeout(() => wrap.remove(), 220);
+      state.ring = null;
+    }
+  }
+
+  el.addEventListener("pointerdown", start);
+  el.addEventListener("pointerup", cancel);
+  el.addEventListener("pointercancel", cancel);
+  el.addEventListener("pointerleave", cancel);
+  el.addEventListener("contextmenu", (e) => e.preventDefault());
+}
+
+function render() {
+  overlay.innerHTML = "";
+  CONFIG.areas.forEach((a) => overlay.append(makeStampEl(a)));
+}
+
+const modal = document.getElementById("modal");
+const modalBox = document.getElementById("modalBox");
+const modalTitle = document.getElementById("modalTitle");
+const modalSub = document.getElementById("modalSub");
+const modalError = document.getElementById("modalError");
+const codeInput = document.getElementById("codeInput");
+
+function openModal(area, isRemoving) {
+  pendingArea = area;
+  modalError.textContent = "";
+  codeInput.value = "";
+  
+  if (isRemoving) {
+    modalTitle.textContent = "Remove stamp?";
+    modalSub.textContent = "Enter removal code.";
+  } else {
+    modalTitle.textContent = "Enter code";
+    modalSub.textContent = "Ask booth staff for the code.";
+  }
+  
+  modal.classList.add("show");
+  setTimeout(() => codeInput.focus(), 100);
+}
+
+function closeModal() {
+  modal.classList.remove("show");
+  pendingArea = null;
+  overlay.querySelectorAll(".stamp").forEach((el) => {
+    const s = holdState.get(el);
+    if (s) s.triggered = false;
+  });
+}
+
+function submitCode() {
+  if (!pendingArea) return;
+  const entered = codeInput.value.trim();
+  const isCurrentlyCollected = !!stamps[pendingArea.id];
+
+  if (!isCurrentlyCollected && entered === CONFIG.STAMP_CODE) {
+    stamps[pendingArea.id] = { 
+      t: Date.now(),
+      c: getRandomColor()
+    };
+    saveStamps(stamps);
+    closeModal();
+    render();
+    if (navigator.vibrate) navigator.vibrate([30, 40, 30]);
+  } 
+  else if (isCurrentlyCollected && entered === CONFIG.REMOVE_CODE) {
+    delete stamps[pendingArea.id];
+    saveStamps(stamps);
+    closeModal();
+    render();
+    if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
+  } 
+  else {
+    modalError.textContent = "Incorrect code. Try again.";
+    modalBox.classList.remove("shake");
+    void modalBox.offsetWidth;
+    modalBox.classList.add("shake");
+    codeInput.select();
+  }
+}
+
+document.getElementById("cancelBtn").addEventListener("click", closeModal);
+document.getElementById("submitBtn").addEventListener("click", submitCode);
+codeInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") submitCode();
+  if (e.key === "Escape") closeModal();
+});
+modal.addEventListener("click", (e) => {
+  if (e.target === modal) closeModal();
+});
+
+render();
+</script>
+</body>
+</html>
