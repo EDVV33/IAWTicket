@@ -262,9 +262,6 @@
   <!-- Overlay for Stamps -->
   <div class="page-layer" id="overlay"></div>
   
-  <footer class="page-foot">
-    <span>Hold a circle for 2 seconds, then enter the staff code.</span>
-  </footer>
 </div>
 
 <div class="modal-backdrop" id="modal">
@@ -287,18 +284,28 @@
    ============================================================ */
 const CONFIG = {
   HOLD_MS: 2000,
-  STAMP_CODE: "1234",  
-  REMOVE_CODE: "4321",
+  REMOVE_CODE: "9090",
 
+  // Added dynCode: { perm: "3 digits", precaution: number }
   areas: [
-    { id: "ekk",      left:  4.5, top:  4.5, width: 13.5, height: 19.0, centered: true }, 
-    { id: "b6",       left: 20.0, top:  4.5, width: 14.0, height: 19.5, centered: true }, 
-    { id: "b5",       left: 40.0, top: 10.5, width: 14.0, height: 19.5, centered: true }, 
-    { id: "khazanah", left:  4.5, top: 22.0, width: 13.5, height: 19.0, centered: true }, 
-    { id: "b3",       left: 19.5, top: 33.5, width: 14.0, height: 19.5, centered: true }, 
-    { id: "b4",       left: 54.5, top: 32.5, width: 14.0, height: 19.5, centered: true }, 
-    { id: "b2",       left:  6.0, top: 62.5, width: 14.0, height: 19.5, centered: true }, 
-    { id: "b1",       left: 38.0, top: 68.0, width: 14.0, height: 19.5, centered: true }, 
+    // Main Booth  
+    { id: "b1",       left: 37.8, top: 64.2, width: 14.0, height: 19.5, centered: true, 
+      code: "1234", dynCode: { perm: "230", precaution: 3 } }, 
+    { id: "b2",       left:  6.6, top: 59.5, width: 14.0, height: 19.5, centered: true, 
+      code: "1234", dynCode: { perm: "700", precaution: 3 } },
+    { id: "b3",       left: 19.5, top: 32,   width: 14.0, height: 19.5, centered: true, 
+      code: "1234", dynCode: { perm: "500", precaution: 3 } }, 
+    { id: "b4",       left: 54,   top: 31.5, width: 14.0, height: 19.5, centered: true, 
+      code: "1234", dynCode: { perm: "600", precaution: 3 } },
+    { id: "b5",       left: 40.0, top: 8,   width: 14.0, height: 19.5, centered: true, 
+      code: "1234", dynCode: { perm: "300", precaution: 3 } },
+    { id: "b6",       left: 19.7, top:  3.8, width: 14.0, height: 19.5, centered: true, 
+      code: "1234", dynCode: { perm: "200", precaution: 3 } },
+    // Bonus Stamps
+    { id: "ekk",      left:  3.9, top:  2.5, width: 10.7, height: 19.0, centered: true, 
+      code: "1234", dynCode: { perm: "100", precaution: 3 } },   
+    { id: "khazanah", left:  3.9, top: 19.2, width: 10.7, height: 19.0, centered: true, 
+      code: "1234", dynCode: { perm: "400", precaution: 3 } },
   ],
 };
 
@@ -312,6 +319,24 @@ function getRandomColor() {
 }
 
 /* ============================================================
+   DYNAMIC CODE CHECKER
+   ============================================================ */
+function getDynamicCode(area) {
+  if (!area.dynCode) return null;
+  
+  const now = new Date();
+  const mins = now.getMinutes();
+  
+  // Get the first digit of the minute (e.g., 04 -> 0, 15 -> 1, 59 -> 5)
+  const firstDigit = Math.floor(mins / 10); 
+  
+  // Add precaution and wrap around using modulo 10
+  let dynDigit = (firstDigit + area.dynCode.precaution) % 10;
+  
+  return `${area.dynCode.perm}${dynDigit}`;
+}
+
+/* ============================================================
    TICKET CODE LOGIC ([DDMM]HH.mm.ss-SS)
    ============================================================ */
 const urlParams = new URLSearchParams(location.search);
@@ -319,7 +344,6 @@ let ticketCode = urlParams.get("ticket");
 
 if (!ticketCode) {
   const now = new Date();
-  
   const dd = String(now.getDate()).padStart(2, '0');
   const mm = String(now.getMonth() + 1).padStart(2, '0');
   const hh = String(now.getHours()).padStart(2, '0');
@@ -327,7 +351,6 @@ if (!ticketCode) {
   const ss = String(now.getSeconds()).padStart(2, '0');
   const ms = String(now.getMilliseconds()).padStart(2, '0').slice(0, 2); 
 
-  // Format: [2610]14.45.12-89
   ticketCode = `[${dd}${mm}]${hh}.${min}.${ss}-${ms}`;
 }
 
@@ -371,7 +394,7 @@ confirmYes.addEventListener("click", () => {
     confirmText.textContent = "Final warning! Are you absolutely sure?";
     confirmYes.textContent = "Wipe";
   } else if (confirmStep === 2) {
-    localStorage.removeItem(`rally_stamps_default`);
+    localStorage.removeItem(`rally_stamps_${urlParams.get("pid") || "default"}`);
     if (urlParams.has("ticket")) {
       location.reload();
     } else {
@@ -560,10 +583,14 @@ function closeModal() {
 
 function submitCode() {
   if (!pendingArea) return;
-  const entered = codeInput.value.trim();
+  const entered = codeInput.value.trim().toUpperCase();
   const isCurrentlyCollected = !!stamps[pendingArea.id];
 
-  if (!isCurrentlyCollected && entered === CONFIG.STAMP_CODE) {
+  // Check for static code OR dynamic code
+  const staticMatch = entered === pendingArea.code.toUpperCase();
+  const dynamicMatch = entered === getDynamicCode(pendingArea);
+
+  if (!isCurrentlyCollected && (staticMatch || dynamicMatch)) {
     stamps[pendingArea.id] = { 
       t: Date.now(),
       c: getRandomColor()
