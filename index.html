@@ -10,6 +10,7 @@
     --muted: #888;
     --border: #8886;
     --text-brown: #4a3b32;
+    --cream: #f4ebd9;
   }
   * { box-sizing: border-box; }
   html, body {
@@ -38,7 +39,6 @@
     inset: 0;
   }
 
-  /* Invisible hit area for each stamp. */
   .stamp {
     position: absolute;
     cursor: pointer;
@@ -49,7 +49,6 @@
   }
   .stamp.collected { cursor: pointer; }
 
-  /* The X — fills the entire hit area (the circle) */
   .x-mark {
     position: absolute;
     inset: 0;
@@ -76,7 +75,6 @@
     100% { opacity: 1; }
   }
 
-  /* Progress ring while holding */
   .hold-ring {
     position: absolute;
     inset: 0;
@@ -99,9 +97,8 @@
     transform-origin: 50% 50%;
   }
 
-  /* Shared button styling */
   .ui-btn {
-    background: #4a3b32;
+    background: var(--text-brown);
     color: white;
     border: none;
     padding: 8px 12px; 
@@ -111,35 +108,53 @@
     font-weight: bold;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     font-family: Arial, sans-serif;
-    position: absolute;
     z-index: 50;
     white-space: nowrap; 
   }
 
-  /* New Ticket Button (Top Right, Page 1) */
-  .new-ticket-btn {
+  .top-btns {
+    position: absolute;
     top: 10px;
     right: 10px;
+    z-index: 50;
+    display: flex;
+    gap: 8px;
   }
+  
+  .new-ticket-btn { position: relative; }
 
-  /* Ticket Code Specific (Bottom Right, Page 2) */
-  .ticket-code-btn {
+  .bottom-btns {
+    position: absolute;
     bottom: 10px;
     right: 10px;
+    z-index: 50;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .ticket-code-btn {
     cursor: text; 
     padding: 2px 10px; 
     font-size: 13px;
     border-radius: 3px; 
     letter-spacing: 1px;
+    background: var(--text-brown);
+    color: white;
+    position: relative;
   }
 
-  /* New Ticket Button Container (for popup) */
-  .new-ticket-container {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 50;
+  .validate-btn {
+    background: #2a7;
+    position: relative;
+    transition: background 0.2s;
   }
+
+  .validate-btn.closing {
+    background: #c33;
+  }
+
+  .new-ticket-container { position: relative; }
   .new-ticket-confirm {
     position: absolute;
     top: 32px; 
@@ -150,44 +165,79 @@
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     display: none;
-    width: 200px;
+    width: 220px;
     text-align: center;
+    z-index: 100;
   }
   .new-ticket-confirm.show { display: block; }
-  .new-ticket-confirm p {
-    margin: 0 0 10px 0;
-    font-size: 13px;
-    color: #333;
-  }
-  .confirm-buttons {
-    display: flex;
-    gap: 8px;
-  }
+  .new-ticket-confirm p { margin: 0 0 10px 0; font-size: 13px; color: #333; }
+  .confirm-buttons { display: flex; gap: 8px; }
   .confirm-buttons button {
-    flex: 1;
-    padding: 6px;
-    font-size: 12px;
-    border-radius: 4px;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
+    flex: 1; padding: 6px; font-size: 12px;
+    border-radius: 4px; border: none; cursor: pointer; font-weight: bold;
   }
   .confirm-yes { background: #c33; color: white; }
   .confirm-no { background: #eee; color: #333; }
 
-  /* Footer */
-  .page-foot {
-    position: absolute;
-    left: 20px; right: 20px; bottom: 12px;
-    display: flex; justify-content: space-between;
-    font-size: 16px; color: #fff;
-    text-shadow: 0 1px 3px #0008;
+  /* VALIDATION SECTION */
+  .validate-section {
+    width: 100%; max-width: 600px; margin: 40px auto 60px;
+    background: var(--text-brown); color: var(--cream);
+    border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    font-family: monospace; overflow: hidden; display: none;
+  }
+  .validate-header {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(0,0,0,0.2); padding: 20px; border-bottom: 2px solid var(--cream);
+  }
+  .validate-header h2 { font-size: 20px; margin: 0; color: var(--cream); }
+  .validate-content { padding: 20px; }
+  .ticket-info {
+    font-size: 14px; margin-bottom: 25px; background: rgba(255, 255, 255, 0.1);
+    padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); word-break: break-all;
+  }
+  .timeline { position: relative; padding-left: 25px; border-left: 3px solid var(--cream); }
+  .timeline-item { position: relative; margin-bottom: 20px; }
+  .timeline-item::before {
+    content: ""; position: absolute; left: -33px; top: 4px;
+    width: 13px; height: 13px; border-radius: 50%;
+    background: var(--cream); border: 3px solid var(--text-brown); box-shadow: 0 0 0 2px var(--cream);
+  }
+  .time-stamp { font-weight: bold; color: var(--cream); font-size: 15px; }
+  .booth-name { font-size: 16px; font-weight: bold; margin: 4px 0; color: #fff; }
+  .time-gap { font-size: 12px; color: #d1c7b8; font-style: italic; }
+  .cumulative { font-size: 12px; color: #aaa; margin-top: 2px; }
+  
+  .summary-box {
+    margin-top: 30px; padding-top: 15px; border-top: 2px dashed var(--cream);
+    font-weight: bold; font-size: 14px; color: var(--cream); text-align: center;
+    line-height: 1.8;
+  }
+  .summary-box span { font-size: 16px; color: #fff; }
+
+  .error-msg {
+    color: #ffcccc; background: rgba(0,0,0,0.2); padding: 15px;
+    border-radius: 8px; border: 1px solid #ffcccc; font-weight: bold;
+    text-align: center; display: none; line-height: 1.5;
+  }
+  
+  .verified-badge {
+    background: #2a7;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-family: Arial, sans-serif;
   }
 
+  /* MODALS */
   .modal-backdrop {
     position: fixed; inset: 0; background: #0008;
     display: none; align-items: center; justify-content: center;
-    z-index: 100; padding: 20px;
+    z-index: 300; padding: 20px;
   }
   .modal-backdrop.show { display: flex; }
   .modal {
@@ -200,8 +250,7 @@
   .modal input {
     width: 100%; font: inherit; font-size: 20px; padding: 14px;
     border: 2px solid var(--border); border-radius: 12px;
-    margin-bottom: 12px; text-align: center;
-    letter-spacing: 3px;
+    margin-bottom: 12px; text-align: center; letter-spacing: 3px;
     background: transparent; color: inherit;
   }
   .modal input:focus { outline: 2px solid var(--accent); border-color: transparent; }
@@ -227,7 +276,7 @@
     html, body { background: white; }
     .page { page-break-after: always; break-after: page; margin: 0; }
     .page:last-child { page-break-after: auto; break-after: auto; }
-    .modal-backdrop, .page-foot, .hold-ring, .new-ticket-container, .ticket-code-btn { display: none !important; }
+    .modal-backdrop, .hold-ring, .top-btns, .bottom-btns, .validate-section { display: none !important; }
     .page img { width: 100%; }
   }
 </style>
@@ -238,15 +287,16 @@
 <div class="page" id="page1">
   <img src="IAWT1.png" alt="Ticket front">
   
-  <!-- New Ticket Button (3-Step) -->
-  <div class="new-ticket-container">
-    <button class="ui-btn new-ticket-btn" id="newTicketBtn">New Ticket</button>
-    
-    <div class="new-ticket-confirm" id="newTicketConfirm">
-      <p id="confirmText">Are you sure you want a new ticket?</p>
-      <div class="confirm-buttons" id="confirmBtns">
-        <button class="confirm-yes" id="confirmYes">Yes</button>
-        <button class="confirm-no" id="confirmNo">No</button>
+  <div class="top-btns">
+    <div class="new-ticket-container">
+      <button class="ui-btn new-ticket-btn" id="newTicketBtn">New Ticket | Tiket Baharu</button>
+      
+      <div class="new-ticket-confirm" id="newTicketConfirm">
+        <p id="confirmText">Are you sure you want a new ticket?</p>
+        <div class="confirm-buttons" id="confirmBtns">
+          <button class="confirm-yes" id="confirmYes">Yes</button>
+          <button class="confirm-no" id="confirmNo">No</button>
+        </div>
       </div>
     </div>
   </div>
@@ -256,24 +306,58 @@
 <div class="page" id="page2">
   <img src="IAWT2.png" alt="Ticket back">
   
-  <!-- Ticket Code (Bottom Right) -->
-  <div class="ui-btn ticket-code-btn" id="ticketCodeBox"></div>
+  <div class="bottom-btns">
+    <button class="ui-btn validate-btn" id="validateBtn">Validate</button>
+    <div class="ui-btn ticket-code-btn" id="ticketCodeBox"></div>
+  </div>
 
-  <!-- Overlay for Stamps -->
   <div class="page-layer" id="overlay"></div>
-  
 </div>
 
+<!-- INLINE VALIDATE SECTION -->
+<div class="validate-section" id="validateSection">
+  <div class="validate-header">
+    <h2>Ticket Verification</h2>
+  </div>
+  
+  <div class="validate-content">
+    <div class="error-msg" id="validateError"></div>
+    
+    <div id="validateSuccess" style="display: none;">
+      <div class="verified-badge">✓ VERIFIED</div>
+      <div class="ticket-info" id="validateInfo"></div>
+      <div class="timeline" id="timelineContainer"></div>
+      <div class="summary-box" id="summaryContainer"></div>
+    </div>
+  </div>
+</div>
+
+<!-- STAMP MODAL -->
 <div class="modal-backdrop" id="modal">
   <div class="modal" id="modalBox">
     <h2 id="modalTitle">Enter code</h2>
     <p id="modalSub">Ask booth staff for the code.</p>
     <div class="error" id="modalError"></div>
-    <input id="codeInput" inputmode="numeric" autocomplete="off"
+    <input id="codeInput" type="text" inputmode="text" autocomplete="off"
            spellcheck="false" maxlength="16">
     <div class="modal-actions">
       <button id="cancelBtn">Cancel</button>
       <button id="submitBtn" class="primary">Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- VALIDATE ACCESS MODAL -->
+<div class="modal-backdrop" id="validateAccessModal">
+  <div class="modal" id="validateAccessBox">
+    <h2>Staff Access</h2>
+    <p>Enter staff code to view timeline.</p>
+    <div class="error" id="validateAccessError"></div>
+    <input id="validateAccessInput" type="text" inputmode="numeric" autocomplete="off"
+           spellcheck="false" maxlength="16">
+    <div class="modal-actions">
+      <button id="validateCancelBtn">Cancel</button>
+      <button id="validateSubmitBtn" class="primary">Submit</button>
     </div>
   </div>
 </div>
@@ -285,29 +369,29 @@
 const CONFIG = {
   HOLD_MS: 2000,
   REMOVE_CODE: "9090",
+  VALIDATE_CODE: "9999",
 
-  // Added dynCode: { perm: "3 digits", precaution: number }
   areas: [
-    // Main Booth  
     { id: "b1",       left: 37.8, top: 64.2, width: 14.0, height: 19.5, centered: true, 
-      code: "1234", dynCode: { perm: "230", precaution: 3 } }, 
+      name: "Booth 1: Birth", code: "Birth-1", dynCode: { perm: "126", precaution: 1 } }, 
     { id: "b2",       left:  6.6, top: 59.5, width: 14.0, height: 19.5, centered: true, 
-      code: "1234", dynCode: { perm: "700", precaution: 3 } },
+      name: "Booth 2: Revelation", code: "Revelation-2", dynCode: { perm: "226", precaution: 2 } },
     { id: "b3",       left: 19.5, top: 32,   width: 14.0, height: 19.5, centered: true, 
-      code: "1234", dynCode: { perm: "500", precaution: 3 } }, 
+      name: "Booth 3: Trials", code: "Trials-3", dynCode: { perm: "326", precaution: 3 } }, 
     { id: "b4",       left: 54,   top: 31.5, width: 14.0, height: 19.5, centered: true, 
-      code: "1234", dynCode: { perm: "600", precaution: 3 } },
+      name: "Booth 4: Hijrah", code: "Hijrah-4", dynCode: { perm: "426", precaution: 1 } },
     { id: "b5",       left: 40.0, top: 8,   width: 14.0, height: 19.5, centered: true, 
-      code: "1234", dynCode: { perm: "300", precaution: 3 } },
+      name: "Booth 5: Leadership", code: "Leadership-5", dynCode: { perm: "526", precaution: 2 } },
     { id: "b6",       left: 19.7, top:  3.8, width: 14.0, height: 19.5, centered: true, 
-      code: "1234", dynCode: { perm: "200", precaution: 3 } },
-    // Bonus Stamps
+      name: "Booth 6: Legacy", code: "Legacy-6", dynCode: { perm: "626", precaution: 3 } },
     { id: "ekk",      left:  3.9, top:  2.5, width: 10.7, height: 19.0, centered: true, 
-      code: "1234", dynCode: { perm: "100", precaution: 3 } },   
+      name: "EKK", code: "EKK", dynCode: { perm: "726", precaution: 1 } },   
     { id: "khazanah", left:  3.9, top: 19.2, width: 10.7, height: 19.0, centered: true, 
-      code: "1234", dynCode: { perm: "400", precaution: 3 } },
+      name: "Khazanah", code: "1234", dynCode: { perm: "826", precaution: 1 } },
   ],
 };
+
+const MAIN_BOOTHS = ["b1", "b2", "b3", "b4", "b5", "b6"];
 
 const PALETTE = [
   "#d46a8c", "#e07a5f", "#81b29a", "#f2cc8f", "#3d405b", 
@@ -323,35 +407,42 @@ function getRandomColor() {
    ============================================================ */
 function getDynamicCode(area) {
   if (!area.dynCode) return null;
-  
   const now = new Date();
   const mins = now.getMinutes();
-  
-  // Get the first digit of the minute (e.g., 04 -> 0, 15 -> 1, 59 -> 5)
   const firstDigit = Math.floor(mins / 10); 
-  
-  // Add precaution and wrap around using modulo 10
   let dynDigit = (firstDigit + area.dynCode.precaution) % 10;
-  
   return `${area.dynCode.perm}${dynDigit}`;
 }
 
 /* ============================================================
-   TICKET CODE LOGIC ([DDMM]HH.mm.ss-SS)
+   TICKET CREATION TIME (Stored permanently to prevent drift)
+   ============================================================ */
+let createdAt = parseInt(localStorage.getItem("rally_created_at"));
+
+if (!createdAt) {
+  createdAt = Date.now();
+  localStorage.setItem("rally_created_at", createdAt);
+}
+
+// Format the locked creation time for display
+const createdDateObj = new Date(createdAt);
+const createdTimeStr = createdDateObj.toLocaleTimeString([], { hour12: false });
+
+/* ============================================================
+   TICKET CODE LOGIC
    ============================================================ */
 const urlParams = new URLSearchParams(location.search);
 let ticketCode = urlParams.get("ticket");
 
 if (!ticketCode) {
-  const now = new Date();
+  const now = new Date(createdAt); // Use the locked time
   const dd = String(now.getDate()).padStart(2, '0');
   const mm = String(now.getMonth() + 1).padStart(2, '0');
   const hh = String(now.getHours()).padStart(2, '0');
   const min = String(now.getMinutes()).padStart(2, '0');
   const ss = String(now.getSeconds()).padStart(2, '0');
-  const ms = String(now.getMilliseconds()).padStart(2, '0').slice(0, 2); 
-
-  ticketCode = `[${dd}${mm}]${hh}.${min}.${ss}-${ms}`;
+  const ms = String(now.getMilliseconds()).padStart(3, '0').slice(0, 3); 
+  ticketCode = `[${dd}${mm}]${hh}:${min}:${ss}.${ms}`;
 }
 
 document.getElementById("ticketCodeBox").textContent = ticketCode;
@@ -370,9 +461,9 @@ let confirmStep = 0;
 function resetConfirm() {
   confirmStep = 0;
   newTicketConfirm.classList.remove("show");
-  confirmText.textContent = "Are you sure you want a new ticket?";
-  confirmYes.textContent = "Yes";
-  confirmNo.textContent = "No";
+  confirmText.textContent = "Are you sure you want a new ticket? | Adakah anda pasti untuk mendapatkan tiket baharu?";
+  confirmYes.textContent = "Yes/Ya";
+  confirmNo.textContent = "No/Tidak";
 }
 
 newTicketBtn.addEventListener("click", (e) => {
@@ -388,13 +479,15 @@ newTicketBtn.addEventListener("click", (e) => {
 confirmYes.addEventListener("click", () => {
   if (confirmStep === 0) {
     confirmStep = 1;
-    confirmText.textContent = "This will permanently delete all stamps and generate a new code. Continue?";
+    confirmText.textContent = "This will permanently delete all stamps. Continue? | Semua cap akan dipadam. Teruskan?";
   } else if (confirmStep === 1) {
     confirmStep = 2;
-    confirmText.textContent = "Final warning! Are you absolutely sure?";
-    confirmYes.textContent = "Wipe";
+    confirmText.textContent = "Final warning! Are you absolutely sure? | Amaran terakhir! Adakah anda pasti sepenuhnya?";
+    confirmYes.textContent = "Wipe/Padam";
   } else if (confirmStep === 2) {
     localStorage.removeItem(`rally_stamps_${urlParams.get("pid") || "default"}`);
+    localStorage.removeItem("rally_created_at");
+    
     if (urlParams.has("ticket")) {
       location.reload();
     } else {
@@ -404,12 +497,186 @@ confirmYes.addEventListener("click", () => {
 });
 
 confirmNo.addEventListener("click", resetConfirm);
-
 document.addEventListener("click", (e) => {
   if (!newTicketConfirm.contains(e.target) && e.target !== newTicketBtn) {
     resetConfirm();
   }
 });
+
+/* ============================================================
+   VALIDATION LOGIC
+   ============================================================ */
+const validateBtn = document.getElementById("validateBtn");
+const validateSection = document.getElementById("validateSection");
+const validateError = document.getElementById("validateError");
+const validateSuccess = document.getElementById("validateSuccess");
+
+const validateAccessModal = document.getElementById("validateAccessModal");
+const validateAccessBox = document.getElementById("validateAccessBox");
+const validateAccessInput = document.getElementById("validateAccessInput");
+const validateAccessError = document.getElementById("validateAccessError");
+
+let isValidationOpen = false;
+
+validateBtn.addEventListener("click", () => {
+  if (isValidationOpen) {
+    // Close the validation
+    validateSection.style.display = "none";
+    validateBtn.textContent = "Validate";
+    validateBtn.classList.remove("closing");
+    isValidationOpen = false;
+  } else {
+    // Open access modal
+    validateAccessInput.value = "";
+    validateAccessError.textContent = "";
+    validateAccessModal.classList.add("show");
+    setTimeout(() => validateAccessInput.focus(), 100);
+  }
+});
+
+function closeValidateAccess() {
+  validateAccessModal.classList.remove("show");
+}
+
+document.getElementById("validateCancelBtn").addEventListener("click", closeValidateAccess);
+document.getElementById("validateSubmitBtn").addEventListener("click", () => {
+  const pass = validateAccessInput.value.trim();
+  
+  if (pass !== CONFIG.VALIDATE_CODE) {
+    validateAccessError.textContent = "Incorrect staff code.";
+    validateAccessBox.classList.remove("shake");
+    void validateAccessBox.offsetWidth;
+    validateAccessBox.classList.add("shake");
+    validateAccessInput.select();
+    return;
+  }
+
+  closeValidateAccess();
+  validateSection.style.display = "block";
+  
+  // Change button state
+  validateBtn.textContent = "Close";
+  validateBtn.classList.add("closing");
+  isValidationOpen = true;
+  
+  const hasAllMain = MAIN_BOOTHS.every(id => stamps[id]);
+  
+  if (hasAllMain) {
+    validateError.style.display = "none";
+    validateSuccess.style.display = "block";
+    buildTimeline();
+  } else {
+    validateSuccess.style.display = "none";
+    validateError.style.display = "block";
+    
+    let missingMsg = "You have not completed all the required booths yet!<br><br>";
+    missingMsg += "• Complete all 6 main booths.";
+    validateError.innerHTML = missingMsg;
+  }
+  
+  validateSection.scrollIntoView({ behavior: 'smooth' });
+});
+
+validateAccessInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    document.getElementById("validateSubmitBtn").click();
+  }
+  if (e.key === "Escape") {
+    closeValidateAccess();
+  }
+});
+
+validateAccessModal.addEventListener("click", (e) => {
+  if (e.target === validateAccessModal) closeValidateAccess();
+});
+
+
+function buildTimeline() {
+  const infoBox = document.getElementById("validateInfo");
+  const timelineBox = document.getElementById("timelineContainer");
+  const summaryBox = document.getElementById("summaryContainer");
+  
+  infoBox.innerHTML = `
+    <div><strong>Ticket ID:</strong> ${ticketCode}</div>
+    <div style="margin-top: 5px;"><strong>Created At:</strong> ${createdTimeStr}</div>
+  `;
+
+  const collectedStamps = [];
+  CONFIG.areas.forEach(area => {
+    if (stamps[area.id]) {
+      collectedStamps.push({
+        name: area.name || area.id,
+        time: stamps[area.id].t
+      });
+    }
+  });
+
+  collectedStamps.sort((a, b) => a.time - b.time);
+  timelineBox.innerHTML = "";
+  
+  let previousTime = createdAt; 
+
+  collectedStamps.forEach((stamp, index) => {
+    const dateObj = new Date(stamp.time);
+    const timeStr = dateObj.toLocaleTimeString([], { hour12: false });
+    
+    let gapStr = "";
+    let cumulativeStr = "";
+
+    if (index === 0) {
+      const diffMs = Math.abs(stamp.time - previousTime);
+      const diffSec = Math.floor(diffMs / 1000);
+      const m = Math.floor(diffSec / 60);
+      const s = diffSec % 60;
+      gapStr = `(+${m}m ${s}s after ticket creation)`;
+    } 
+    else {
+      const diffMs = Math.abs(stamp.time - previousTime);
+      const diffSec = Math.floor(diffMs / 1000);
+      const m = Math.floor(diffSec / 60);
+      const s = diffSec % 60;
+      gapStr = `(+${m}m ${s}s since previous)`;
+
+      const cumDiffMs = Math.abs(stamp.time - createdAt);
+      const cumDiffSec = Math.floor(cumDiffMs / 1000);
+      const cumM = Math.floor(cumDiffSec / 60);
+      const cumS = cumDiffSec % 60;
+      cumulativeStr = `<div class="cumulative">(Total: ${cumM}m ${cumS}s since ticket creation)</div>`;
+    }
+
+    const item = document.createElement("div");
+    item.className = "timeline-item";
+    item.innerHTML = `
+      <div class="time-stamp">${timeStr}</div>
+      <div class="booth-name">${stamp.name}</div>
+      <div class="time-gap">${gapStr}</div>
+      ${cumulativeStr}
+    `;
+    
+    timelineBox.appendChild(item);
+    previousTime = stamp.time;
+  });
+
+  if (collectedStamps.length > 0) {
+    const firstTime = collectedStamps[0].time;
+    const lastTime = collectedStamps[collectedStamps.length - 1].time;
+    
+    const totalDiffMs = Math.abs(lastTime - createdAt);
+    const totalDiffSec = Math.floor(totalDiffMs / 1000);
+    const totalM = Math.floor(totalDiffSec / 60);
+    const totalS = totalDiffSec % 60;
+    
+    const activeDiffMs = Math.abs(lastTime - firstTime);
+    const activeDiffSec = Math.floor(activeDiffMs / 1000);
+    const activeM = Math.floor(activeDiffSec / 60);
+    const activeS = activeDiffSec % 60;
+    
+    summaryBox.innerHTML = `
+      <div style="margin-bottom: 10px;">Ticket Creation to Last Stamp: <br><span>${totalM}m ${totalS}s</span></div>
+      <div>First to Last Stamp: <br><span>${activeM}m ${activeS}s</span></div>
+    `;
+  }
+}
 
 /* ============================================================ */
 
@@ -438,15 +705,11 @@ function buildRing() {
 
   const track = document.createElementNS(ns, "circle");
   track.setAttribute("class", "track");
-  track.setAttribute("cx", "50");
-  track.setAttribute("cy", "50");
-  track.setAttribute("r", "44");
+  track.setAttribute("cx", "50"); track.setAttribute("cy", "50"); track.setAttribute("r", "44");
 
   const bar = document.createElementNS(ns, "circle");
   bar.setAttribute("class", "bar");
-  bar.setAttribute("cx", "50");
-  bar.setAttribute("cy", "50");
-  bar.setAttribute("r", "44");
+  bar.setAttribute("cx", "50"); bar.setAttribute("cy", "50"); bar.setAttribute("r", "44");
   bar.setAttribute("stroke-dasharray", "276.46");
   bar.setAttribute("stroke-dashoffset", "276.46");
 
@@ -583,11 +846,10 @@ function closeModal() {
 
 function submitCode() {
   if (!pendingArea) return;
-  const entered = codeInput.value.trim().toUpperCase();
+  const entered = codeInput.value.trim(); 
   const isCurrentlyCollected = !!stamps[pendingArea.id];
 
-  // Check for static code OR dynamic code
-  const staticMatch = entered === pendingArea.code.toUpperCase();
+  const staticMatch = entered === pendingArea.code;
   const dynamicMatch = entered === getDynamicCode(pendingArea);
 
   if (!isCurrentlyCollected && (staticMatch || dynamicMatch)) {
@@ -598,6 +860,12 @@ function submitCode() {
     saveStamps(stamps);
     closeModal();
     render();
+    
+    if (validateSection.style.display === "block") {
+       const isSuccess = validateSuccess.style.display === "block";
+       if (isSuccess) buildTimeline();
+    }
+    
     if (navigator.vibrate) navigator.vibrate([30, 40, 30]);
   } 
   else if (isCurrentlyCollected && entered === CONFIG.REMOVE_CODE) {
@@ -605,6 +873,14 @@ function submitCode() {
     saveStamps(stamps);
     closeModal();
     render();
+    
+    if (validateSection.style.display === "block") {
+      validateSection.style.display = "none";
+      validateBtn.textContent = "Validate";
+      validateBtn.classList.remove("closing");
+      isValidationOpen = false;
+    }
+    
     if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
   } 
   else {
